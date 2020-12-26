@@ -1,1 +1,1 @@
-# workshop-graphql
+criando projeto para worksop
