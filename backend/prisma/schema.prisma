@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model customers {
+  customerNumber         Int        @id
+  customerName           String
+  contactLastName        String
+  contactFirstName       String
+  phone                  String
+  addressLine1           String
+  addressLine2           String?
+  city                   String
+  state                  String?
+  postalCode             String?
+  country                String
+  salesRepEmployeeNumber Int?
+  creditLimit            Float?
+  employees              employees? @relation(fields: [salesRepEmployeeNumber], references: [employeeNumber])
+  orders                 orders[]
+  payments               payments[]
+
+  @@index([salesRepEmployeeNumber], name: "salesRepEmployeeNumber")
+}
+
+model employees {
+  employeeNumber  Int         @id
+  lastName        String
+  firstName       String
+  extension       String
+  email           String
+  officeCode      String
+  reportsTo       Int?
+  jobTitle        String
+  offices         offices     @relation(fields: [officeCode], references: [officeCode])
+  employees       employees?  @relation("employeesToemployees_reportsTo", fields: [reportsTo], references: [employeeNumber])
+  customers       customers[]
+  other_employees employees[] @relation("employeesToemployees_reportsTo")
+
+  @@index([officeCode], name: "officeCode")
+  @@index([reportsTo], name: "reportsTo")
+}
+
+model offices {
+  officeCode   String      @id
+  city         String
+  phone        String
+  addressLine1 String
+  addressLine2 String?
+  state        String?
+  country      String
+  postalCode   String
+  territory    String
+  employees    employees[]
+}
+
+model orderdetails {
+  orderNumber     Int
+  productCode     String
+  quantityOrdered Int
+  priceEach       Float
+  orderLineNumber Int
+  orders          orders   @relation(fields: [orderNumber], references: [orderNumber])
+  products        products @relation(fields: [productCode], references: [productCode])
+
+  @@id([orderNumber, productCode])
+  @@index([productCode], name: "productCode")
+}
+
+model orders {
+  orderNumber    Int            @id
+  orderDate      DateTime
+  requiredDate   DateTime
+  shippedDate    DateTime?
+  status         String
+  comments       String?
+  customerNumber Int
+  customers      customers      @relation(fields: [customerNumber], references: [customerNumber])
+  orderdetails   orderdetails[]
+
+  @@index([customerNumber], name: "customerNumber")
+}
+
+model payments {
+  customerNumber Int
+  checkNumber    String
+  paymentDate    DateTime
+  amount         Float
+  customers      customers @relation(fields: [customerNumber], references: [customerNumber])
+
+  @@id([customerNumber, checkNumber])
+}
+
+model productlines {
+  productLine     String      @id
+  textDescription String?
+  htmlDescription String?
+  // This type is currently not supported.
+  // image        mediumblob?
+  products        products[]
+}
+
+model products {
+  productCode        String         @id
+  productName        String
+  productLine        String
+  productScale       String
+  productVendor      String
+  productDescription String
+  quantityInStock    Int
+  buyPrice           Float
+  MSRP               Float
+  productlines       productlines   @relation(fields: [productLine], references: [productLine])
+  orderdetails       orderdetails[]
+
+  @@index([productLine], name: "productLine")
+}
